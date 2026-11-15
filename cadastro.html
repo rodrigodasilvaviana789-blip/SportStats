@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SportStats | Criar conta</title>
+
+<link rel="stylesheet" href="estilo.css">
+
+</head>
+
+<body>
+
+<header class="cabecalho">
+
+    <h1 class="logo">Sport<span>Stats</span></h1>
+
+    <p>O jogo em números.</p>
+
+</header>
+
+<main class="container">
+
+    <section class="cartao-login">
+
+        <div class="icone-bola">⚽</div>
+
+        <h2>Crie sua conta!</h2>
+
+        <p class="descricao">
+            Faça parte da comunidade SportStats.
+            Acompanhe o mundo do esporte!
+        </p>
+
+        <form id="formCadastro">
+
+            <div class="erro-form" id="erroForm"></div>
+
+            <div class="campo">
+
+                <label for="nome">Nome completo</label>
+
+                <input
+                    type="text"
+                    id="nome"
+                    name="nome"
+                    placeholder="Digite seu nome completo"
+                    required>
+
+            </div>
+
+            <div class="campo">
+
+                <label for="gmail">Gmail</label>
+
+                <input
+                    type="email"
+                    id="gmail"
+                    name="gmail"
+                    placeholder="voce@gmail.com"
+                    required>
+
+            </div>
+
+            <div class="campo">
+
+                <label for="senha">Crie uma senha</label>
+
+                <input
+                    type="password"
+                    id="senha"
+                    name="senha"
+                    placeholder="Digite sua senha"
+                    required>
+
+            </div>
+
+            <div class="campo">
+
+                <label for="confirmarSenha">Confirme sua senha</label>
+
+                <input
+                    type="password"
+                    id="confirmarSenha"
+                    name="confirmarSenha"
+                    placeholder="Digite sua senha novamente"
+                    required>
+
+            </div>
+
+            <button type="submit" class="botao-entrar">
+                Criar minha conta
+            </button>
+
+        </form>
+
+        <p class="cadastro">
+            Já possui uma conta?
+
+            <a href="index.html">Entre aqui</a>
+        </p>
+
+    </section>
+
+</main>
+
+<footer class="rodape">
+
+    <p>SPORTSTATS — ACOMPANHE O JOGO. ENTENDA OS NÚMEROS.</p>
+
+</footer>
+
+<script src="dados.js"></script>
+<script src="usuario.js"></script>
+<script>
+
+    propagarRetorno();
+
+    document.getElementById('formCadastro').addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const erro = document.getElementById('erroForm');
+        erro.style.display = 'none';
+
+        const senha = document.getElementById('senha').value;
+
+        if (senha !== document.getElementById('confirmarSenha').value) {
+            erro.textContent = 'As senhas não são iguais.';
+            erro.style.display = 'block';
+            return;
+        }
+        if (senha.length < 6) {
+            erro.textContent = 'A senha precisa ter pelo menos 6 caracteres.';
+            erro.style.display = 'block';
+            return;
+        }
+
+        try {
+            await criarConta({
+                nome: document.getElementById('nome').value,
+                email: document.getElementById('gmail').value,
+                senha
+            });
+            window.location.href = paginaDeRetorno();
+        } catch (e) {
+            erro.textContent = e.message;
+            erro.style.display = 'block';
+        }
+    });
+
+</script>
+
+</body>
+
+</html>

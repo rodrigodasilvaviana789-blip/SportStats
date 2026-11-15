@@ -1,0 +1,11 @@
+# Segredos: NUNCA enviar para o GitHub
+.env
+.env.*
+!.env.example
+
+# Dados do site no modo "arquivos" (partidas, contas, imagens, senha do admin)
+banco/
+servidor/cache-noticias.json
+
+node_modules/
+.DS_Store

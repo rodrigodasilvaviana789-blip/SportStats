@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SportStats | Classificação</title>
+
+    <link rel="stylesheet" href="estilo.css">
+</head>
+
+<body class="pagina-partida">
+
+    <header class="topo">
+
+        <h1 class="logo">Sport<span>Stats</span></h1>
+
+        <nav class="menu-superior">
+            <a href="inicio.html">Início</a>
+            <a href="noticias.html">Notícias</a>
+            <a href="classificacao.html" class="ativo">Classificação</a>
+            <a href="cadastrar-partida.html">Cadastrar partida</a>
+        </nav>
+
+        <div class="perfil">👤</div>
+
+    </header>
+
+    <main class="conteudo-classificacao">
+
+        <h2 id="titulo">Classificação</h2>
+        <p class="subtitulo" id="subtitulo">Carregando...</p>
+
+        <div class="chips-noticias" id="chips"></div>
+
+        <div id="area"></div>
+
+        <footer class="rodape">
+            <p>SPORTSTATS — ACOMPANHE O JOGO. ENTENDA OS NÚMEROS.</p>
+        </footer>
+
+    </main>
+
+    <script src="dados.js"></script>
+    <script src="usuario.js"></script>
+    <script>
+
+        const $ = id => document.getElementById(id);
+
+        // campeonato escolhido: ?c=Campeonato%20Brasileiro
+        let campeonatoAtual = new URLSearchParams(window.location.search).get('c') || '';
+
+        function zonaDaPosicao(zonas, pos) {
+            return zonas.find(z => pos >= z.de && pos <= z.ate) || null;
+        }
+
+        function htmlForma(forma) {
+            if (forma.length === 0) return '—';
+            return `<span class="forma">${forma.map(r => `<span class="${r}">${r}</span>`).join('')}</span>`;
+        }
+
+        function htmlEscudoTabela(escudo) {
+            return ehImagem(escudo) ? htmlEscudo(escudo) : `<span class="escudo-emoji">${htmlEscudo(escudo)}</span>`;
+        }
+
+        function desenharTabela(dados) {
+            const zonas = zonasDoCampeonato(dados.campeonato);
+            const usadas = new Set();
+
+            const linhas = dados.tabela.map(t => {
+                const z = zonaDaPosicao(zonas, t.pos);
+                if (z) usadas.add(z);
+                const borda = z ? `border-left-color:${z.cor}` : '';
+                const sg = t.sg > 0 ? '+' + t.sg : t.sg;
+                return `
+                    <tr>
+                        <td class="col-pos"><span class="pos" style="${borda}" ${z ? `title="${esc(z.nome)}"` : ''}>${t.pos}</span></td>
+                        <td class="col-time"><div class="time-tabela">${htmlEscudoTabela(t.escudo)}<span>${esc(t.nome)}</span></div></td>
+                        <td class="pontos">${t.pontos}</td>
+                        <td>${t.j}</td>
+                        <td>${t.v}</td>
+                        <td>${t.e}</td>
+                        <td>${t.d}</td>
+                        <td class="col-extra">${t.gp}</td>
+                        <td class="col-extra">${t.gc}</td>
+                        <td>${sg}</td>
+                        <td class="col-extra">${htmlForma(t.forma)}</td>
+                    </tr>`;
+            }).join('');
+
+            const legenda = [...usadas].map(z =>
+                `<span><i style="background:${z.cor}"></i>${esc(z.nome)}</span>`).join('');
+
+            $('area').innerHTML = `
+                <div class="tabela-rolagem">
+                    <table class="tabela-classificacao">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th class="col-time">Time</th>
+                                <th title="Pontos">P</th>
+                                <th title="Jogos">J</th>
+                                <th title="Vitórias">V</th>
+                                <th title="Empates">E</th>
+                                <th title="Derrotas">D</th>
+                                <th class="col-extra" title="Gols pró">GP</th>
+                                <th class="col-extra" title="Gols contra">GC</th>
+                                <th title="Saldo de gols">SG</th>
+                                <th class="col-extra">Últimos 5</th>
+                            </tr>
+                        </thead>
+                        <tbody>${linhas}</tbody>
+                    </table>
+                </div>
+                ${legenda ? `<div class="legenda-zonas">${legenda}</div>` : ''}
+                <p class="nota-criterios">
+                    Desempate: pontos, vitórias, saldo de gols e gols pró.
+                    A tabela é calculada com as partidas marcadas como <strong>encerradas</strong>.
+                </p>`;
+        }
+
+        let tabelaMostrada = false;
+
+        async function carregar() {
+            let campeonatos;
+            try {
+                campeonatos = await listarCampeonatos();
+            } catch (erro) {
+                if (!tabelaMostrada) {
+                    $('subtitulo').textContent = '';
+                    $('area').innerHTML = '<p class="mensagem-vazia">Não consegui carregar a classificação agora. Tente novamente em instantes.</p>';
+                }
+                return;
+            }
+
+            if (campeonatos.length === 0) {
+                $('titulo').textContent = 'Classificação';
+                $('subtitulo').textContent = '';
+                $('chips').innerHTML = '';
+                $('area').innerHTML = `<p class="mensagem-vazia">
+                    Ainda não há partidas cadastradas. <a href="cadastrar-partida.html" style="color:#00e676">Cadastre uma partida</a>
+                    e marque como <strong>encerrada</strong> para a tabela aparecer.</p>`;
+                return;
+            }
+
+            // se o campeonato pedido não existe (ou não foi pedido), usa o primeiro
+            const existe = campeonatos.find(c => chaveCampeonato(c) === chaveCampeonato(campeonatoAtual));
+            campeonatoAtual = existe || campeonatos[0];
+
+            $('chips').innerHTML = campeonatos.length > 1
+                ? campeonatos.map(c => `<button data-c="${esc(c)}" class="${c === campeonatoAtual ? 'chip-ativo' : ''}">${esc(c)}</button>`).join('')
+                : '';
+
+            let dados;
+            try {
+                dados = await obterClassificacao(campeonatoAtual);
+            } catch (erro) {
+                return;
+            }
+            tabelaMostrada = true;
+            $('titulo').textContent = '🏆 ' + dados.campeonato;
+
+            if (dados.tabela.length === 0) {
+                $('subtitulo').textContent = 'Nenhuma partida encerrada ainda';
+                $('area').innerHTML = `<p class="mensagem-vazia">
+                    Marque pelo menos uma partida deste campeonato como <strong>encerrada</strong>
+                    em <a href="cadastrar-partida.html" style="color:#00e676">Cadastrar partida</a>.</p>`;
+                return;
+            }
+
+            $('subtitulo').textContent =
+                `${dados.tabela.length} times • ${dados.jogosConsiderados} ${dados.jogosConsiderados === 1 ? 'partida encerrada' : 'partidas encerradas'}`;
+            desenharTabela(dados);
+        }
+
+        $('chips').addEventListener('click', (ev) => {
+            const botao = ev.target.closest('button[data-c]');
+            if (!botao) return;
+            campeonatoAtual = botao.dataset.c;
+            history.replaceState(null, '', '?c=' + encodeURIComponent(campeonatoAtual));
+            carregar();
+        });
+
+        carregar();
+        setInterval(carregar, 30000);
+
+    </script>
+
+</body>
+
+</html>

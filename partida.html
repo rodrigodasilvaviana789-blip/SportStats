@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SportStats | Detalhes da Partida</title>
+
+    <link rel="stylesheet" href="estilo.css">
+</head>
+
+<body class="pagina-partida">
+
+    <!-- CABEÇALHO -->
+
+    <header class="topo">
+
+        <h1 class="logo">Sport<span>Stats</span></h1>
+
+        <nav class="menu-superior">
+            <a href="inicio.html">Início</a>
+            <a href="#">Estatísticas</a>
+            <a href="noticias.html">Notícias</a>
+            <a href="classificacao.html">Classificação</a>
+            <a href="cadastrar-partida.html">Cadastrar partida</a>
+        </nav>
+
+        <div class="perfil">
+            👤
+        </div>
+
+    </header>
+
+
+    <!-- CONTEÚDO PRINCIPAL (preenchido pelo JavaScript) -->
+
+    <main class="conteudo-partida">
+
+        <a href="inicio.html" class="voltar">
+            ← Voltar para os jogos
+        </a>
+
+        <div id="conteudo">
+            <p class="mensagem-vazia">Carregando partida...</p>
+        </div>
+
+        <!-- RODAPÉ -->
+
+        <footer class="rodape">
+            <p>SPORTSTATS — ACOMPANHE O JOGO. ENTENDA OS NÚMEROS.</p>
+        </footer>
+
+    </main>
+
+    <script src="dados.js"></script>
+    <script src="usuario.js"></script>
+    <script>
+
+        const params = new URLSearchParams(window.location.search);
+        const partidaId = params.get('id');
+
+        function percentual(a, b) {
+            const total = a + b;
+            if (total === 0) return [0, 0];
+            const pa = Math.round((a / total) * 100);
+            return [pa, 100 - pa];
+        }
+
+        function textoStatus(p) {
+            if (p.status === 'aovivo') {
+                return 'AO VIVO' + (p.minuto ? ` • ${esc(p.minuto)}'` : '');
+            }
+            if (p.status === 'encerrada') return 'ENCERRADO';
+            return 'AGENDADO';
+        }
+
+        function textoRodape(p) {
+            if (p.status === 'aovivo') return 'Partida em andamento';
+            if (p.status === 'encerrada') return 'Resultado final';
+            return `${formatarData(p.data)}${p.hora ? ' às ' + esc(p.hora) : ''}`;
+        }
+
+        function htmlEstatistica(e, par) {
+            const [a, b] = par;
+            const [pa, pb] = percentual(a, b);
+            return `
+                <div class="estatistica">
+                    <span>${esc(e.nome)}</span>
+                    <div class="valores-estatistica">
+                        <strong>${a}${e.sufixo}</strong>
+                        <strong>${b}${e.sufixo}</strong>
+                    </div>
+                    <div class="barra-estatistica">
+                        <div class="barra-casa" style="width: ${pa}%;"></div>
+                        <div class="barra-fora" style="width: ${pb}%;"></div>
+                    </div>
+                </div>`;
+        }
+
+        function desenhar(p) {
+            const corCasa = corSegura(p.casa.cor, '#d93636');
+            const corFora = corSegura(p.fora.cor, '#28a85a');
+            const agendada = p.status === 'agendada';
+            const golsCasa = agendada ? '–' : p.casa.gols;
+            const golsFora = agendada ? '–' : p.fora.gols;
+
+            document.title = `SportStats | ${p.casa.nome} x ${p.fora.nome}`;
+
+            const estatisticas = ESTATISTICAS
+                .map(e => htmlEstatistica(e, (p.stats && p.stats[e.chave]) || [0, 0]))
+                .join('');
+
+            document.getElementById('conteudo').innerHTML = `
+                <div style="--cor-casa: ${corCasa}; --cor-fora: ${corFora};">
+
+                    <!-- INFORMAÇÕES DO CAMPEONATO -->
+                    <section class="informacao-campeonato">
+                        <p>${esc(p.campeonato)}</p>
+                        <span>${p.rodada ? 'Rodada ' + esc(p.rodada) : ''}${p.rodada && p.temporada ? ' • ' : ''}${p.temporada ? 'Temporada ' + esc(p.temporada) : ''}</span>
+                        <br><a class="link-classificacao" href="classificacao.html?c=${encodeURIComponent(p.campeonato)}">Ver classificação →</a>
+                    </section>
+
+                    <!-- PLACAR -->
+                    <section class="placar-partida">
+
+                        <div class="time-partida">
+                            <div class="escudo-time">${htmlEscudo(p.casa.escudo)}</div>
+                            <h2>${esc(p.casa.nome)}</h2>
+                            <span>Mandante</span>
+                        </div>
+
+                        <div class="resultado-partida">
+                            <span class="status-partida ${p.status === 'aovivo' ? 'ao-vivo-status' : ''}">${textoStatus(p)}</span>
+                            <div class="placar">
+                                <strong>${golsCasa}</strong>
+                                <span>x</span>
+                                <strong>${golsFora}</strong>
+                            </div>
+                            <p>${textoRodape(p)}</p>
+                        </div>
+
+                        <div class="time-partida">
+                            <div class="escudo-time">${htmlEscudo(p.fora.escudo)}</div>
+                            <h2>${esc(p.fora.nome)}</h2>
+                            <span>Visitante</span>
+                        </div>
+
+                    </section>
+
+                    <!-- INFORMAÇÕES DA PARTIDA -->
+                    <section class="informacoes-jogo">
+                        <h2>Informações da partida</h2>
+                        <div class="dados-partida">
+                            <div><span>Competição</span><strong>${esc(p.campeonato)}</strong></div>
+                            <div><span>Data</span><strong>${formatarData(p.data)}${p.hora ? ' • ' + esc(p.hora) : ''}</strong></div>
+                            <div><span>Estádio</span><strong>${esc(p.estadio) || '—'}</strong></div>
+                            <div><span>Local</span><strong>${esc(p.local) || '—'}</strong></div>
+                        </div>
+                    </section>
+
+                    <!-- ESTATÍSTICAS -->
+                    <section class="estatisticas-partida">
+                        <h2>Estatísticas da partida</h2>
+                        ${agendada
+                            ? '<p class="aviso-demonstrativo">As estatísticas aparecem quando a partida começar.</p>'
+                            : '<div style="height:25px"></div>' + estatisticas}
+                        <div class="legenda-estatisticas">
+                            <span><i style="background:${corCasa}"></i>${esc(p.casa.nome)}</span>
+                            <span><i style="background:${corFora}"></i>${esc(p.fora.nome)}</span>
+                        </div>
+                    </section>
+
+                </div>`;
+        }
+
+        let partidaMostrada = false;
+
+        async function carregar() {
+            const alvo = document.getElementById('conteudo');
+
+            if (!partidaId) {
+                alvo.innerHTML = '<p class="mensagem-vazia">Nenhuma partida selecionada. Volte e escolha um jogo.</p>';
+                return;
+            }
+
+            let p;
+            try {
+                p = await obterPartida(partidaId);
+            } catch (erro) {
+                // já mostramos a partida antes? então mantém a tela como está
+                if (!partidaMostrada) {
+                    alvo.innerHTML = '<p class="mensagem-vazia">Não consegui carregar a partida agora. Tente novamente em instantes.</p>';
+                }
+                return;
+            }
+
+            if (!p) {
+                alvo.innerHTML = '<p class="mensagem-vazia">Partida não encontrada.</p>';
+                return;
+            }
+
+            desenhar(p);
+            partidaMostrada = true;
+        }
+
+        carregar();
+
+        // Atualiza sozinho a cada 30s.
+        // (Quando ligar a API-Football, isso passa a buscar o placar ao vivo.)
+        setInterval(carregar, 30000);
+
+    </script>
+
+</body>
+
+</html>

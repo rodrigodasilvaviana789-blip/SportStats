@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SportStats | Notícias</title>
+
+    <link rel="stylesheet" href="estilo.css">
+</head>
+
+<body class="pagina-partida">
+
+    <header class="topo">
+
+        <h1 class="logo">Sport<span>Stats</span></h1>
+
+        <nav class="menu-superior">
+            <a href="inicio.html">Início</a>
+            <a href="noticias.html" class="ativo">Notícias</a>
+            <a href="classificacao.html">Classificação</a>
+            <a href="cadastrar-partida.html">Cadastrar partida</a>
+        </nav>
+
+        <div class="perfil">👤</div>
+
+    </header>
+
+    <main class="conteudo-noticias">
+
+        <h2>Notícias</h2>
+        <p class="subtitulo" id="subtitulo">Carregando...</p>
+
+        <div class="chips-noticias" id="chips"></div>
+
+        <div class="grade-noticias" id="grade"></div>
+
+        <footer class="rodape">
+            <p>SPORTSTATS — ACOMPANHE O JOGO. ENTENDA OS NÚMEROS.</p>
+        </footer>
+
+    </main>
+
+    <script src="dados.js"></script>
+    <script src="usuario.js"></script>
+    <script src="noticias.js"></script>
+    <script>
+
+        const $ = id => document.getElementById(id);
+
+        // a etiqueta escolhida fica na URL (noticias.html#Flamengo)
+        let tagAtual = decodeURIComponent(window.location.hash.slice(1));
+
+        function mensagemServidor() {
+            return `<p class="mensagem-vazia mensagem-grade">
+                Não consegui falar com o servidor de notícias.<br>
+                Abra o terminal na pasta do projeto e rode <code>node servidor/server.js</code>,
+                depois acesse <code>http://localhost:3000</code>.</p>`;
+        }
+
+        async function desenharChips() {
+            const tags = await buscarTags();
+            const usuario = usuarioAtual();
+            const meuTime = usuario && usuario.timeCoracao;
+
+            let html = `<button data-tag="" class="${tagAtual ? '' : 'chip-ativo'}">Todas</button>`;
+
+            // time do coração em primeiro, se a pessoa tiver escolhido
+            const ordenadas = [...tags];
+            if (meuTime) {
+                const i = ordenadas.findIndex(t => t.nome.toLowerCase() === meuTime.toLowerCase());
+                if (i > 0) ordenadas.unshift(ordenadas.splice(i, 1)[0]);
+            }
+
+            html += ordenadas.map(t => `
+                <button data-tag="${esc(t.nome)}" class="${t.nome === tagAtual ? 'chip-ativo' : ''}">
+                    ${esc(t.nome)}
+                </button>`).join('');
+
+            $('chips').innerHTML = html;
+        }
+
+        async function desenharNoticias() {
+            try {
+                const dados = await buscarNoticias({ tag: tagAtual, limite: 60 });
+
+                $('subtitulo').textContent = dados.atualizadoEm
+                    ? `Atualizado às ${new Date(dados.atualizadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • ${dados.total} notícias`
+                    : 'O servidor ainda está buscando as primeiras notícias...';
+
+                if (dados.noticias.length === 0) {
+                    $('grade').innerHTML = `<p class="mensagem-vazia mensagem-grade">
+                        ${dados.atualizadoEm ? 'Nenhuma notícia nessa categoria agora.' : 'Aguarde alguns segundos e atualize a página.'}</p>`;
+                    return;
+                }
+
+                $('grade').innerHTML = dados.noticias.map(htmlNoticiaCartao).join('');
+                tratarImagens($('grade'));
+            } catch (erro) {
+                $('subtitulo').textContent = 'Servidor de notícias indisponível';
+                $('grade').innerHTML = mensagemServidor();
+            }
+        }
+
+        $('chips').addEventListener('click', (ev) => {
+            const botao = ev.target.closest('button[data-tag]');
+            if (!botao) return;
+            tagAtual = botao.dataset.tag;
+            history.replaceState(null, '', tagAtual ? '#' + encodeURIComponent(tagAtual) : window.location.pathname);
+            document.querySelectorAll('#chips button').forEach(b => b.classList.toggle('chip-ativo', b === botao));
+            desenharNoticias();
+        });
+
+        // acompanha mudanças no # da URL (botão voltar, link para outra etiqueta)
+        window.addEventListener('hashchange', () => {
+            tagAtual = decodeURIComponent(window.location.hash.slice(1));
+            document.querySelectorAll('#chips button').forEach(b => b.classList.toggle('chip-ativo', b.dataset.tag === tagAtual));
+            desenharNoticias();
+        });
+
+        async function iniciar() {
+            await carregarSessao();
+            await carregarTimes();
+            try { await desenharChips(); } catch (e) { /* o erro é mostrado em desenharNoticias */ }
+            desenharNoticias();
+        }
+
+        iniciar();
+        setInterval(desenharNoticias, 5 * 60 * 1000); // renova a lista a cada 5 min
+
+    </script>
+
+</body>
+
+</html>

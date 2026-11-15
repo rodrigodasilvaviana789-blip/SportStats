@@ -1,0 +1,22 @@
+# Configuração do Render (Blueprint).
+# Em Render: New > Blueprint > escolha o repositório do GitHub.
+# As variáveis marcadas com "sync: false" são digitadas por você no painel do Render
+# (NUNCA escreva senhas ou chaves aqui nem no GitHub).
+services:
+  - type: web
+    name: sportstats
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node servidor/server.js
+    healthCheckPath: /api/saude
+    autoDeploy: true            # a cada "git push" na branch principal, o site atualiza sozinho
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: SUPABASE_URL       # ex.: https://abcdefgh.supabase.co
+        sync: false
+      - key: SUPABASE_SECRET_KEY  # chave SECRETA do Supabase (sb_secret_... ou service_role)
+        sync: false
+      - key: ADMIN_SENHA        # chave de administrador do site (8+ caracteres)
+        sync: false

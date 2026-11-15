@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SportStats | O jogo em números</title>
+
+    <link rel="stylesheet" href="estilo.css">
+</head>
+
+<body>
+
+    <header class="cabecalho">
+        <h1 class="logo">Sport<span>Stats</span></h1>
+        <p>O jogo em números.</p>
+    </header>
+
+    <main class="container">
+
+        <section class="cartao-login">
+
+            <div class="icone-bola">⚽</div>
+
+            <h2>Bem-vindo de volta!</h2>
+
+            <p class="descricao">
+                Entre na sua conta e acompanhe o mundo do esporte.
+            </p>
+
+            <form id="formLogin">
+
+                <div class="erro-form" id="erroForm"></div>
+
+                <div class="campo">
+                    <label for="gmail">Gmail</label>
+                    <input
+                        type="email"
+                        id="gmail"
+                        name="gmail"
+                        placeholder="voce@gmail.com"
+                        required>
+                </div>
+
+                <div class="campo">
+                    <label for="senha">Senha</label>
+                    <input
+                        type="password"
+                        id="senha"
+                        name="senha"
+                        placeholder="Digite sua senha"
+                        required>
+                </div>
+
+                <button type="submit" class="botao-entrar">
+                    Entrar na conta
+                </button>
+
+            </form>
+
+            <p class="cadastro">
+                Ainda não tem uma conta?
+                <a href="cadastro.html">Cadastre-se</a>
+            </p>
+
+        </section>
+
+    </main>
+
+    <footer class="rodape">
+        <p>SPORTSTATS — ACOMPANHE O JOGO. ENTENDA OS NÚMEROS.</p>
+    </footer>
+
+    <script src="dados.js"></script>
+    <script src="usuario.js"></script>
+    <script>
+
+        // quem já está logado vai direto para o início
+        carregarSessao().then(() => { if (usuarioAtual()) window.location.replace(paginaDeRetorno()); });
+        propagarRetorno();
+
+        document.getElementById('formLogin').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            const erro = document.getElementById('erroForm');
+            erro.style.display = 'none';
+            try {
+                await entrar(document.getElementById('gmail').value, document.getElementById('senha').value);
+                window.location.href = paginaDeRetorno();
+            } catch (e) {
+                erro.textContent = e.message;
+                erro.style.display = 'block';
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>

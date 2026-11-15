@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SportStats | Meu perfil</title>
+
+    <link rel="stylesheet" href="estilo.css">
+</head>
+
+<body class="pagina-partida">
+
+    <header class="topo">
+
+        <h1 class="logo">Sport<span>Stats</span></h1>
+
+        <nav class="menu-superior">
+            <a href="inicio.html">Início</a>
+            <a href="noticias.html">Notícias</a>
+            <a href="classificacao.html">Classificação</a>
+            <a href="cadastrar-partida.html">Cadastrar partida</a>
+        </nav>
+
+        <div class="perfil">👤</div>
+
+    </header>
+
+    <main class="conteudo-perfil">
+
+        <a href="inicio.html" class="voltar">← Voltar para os jogos</a>
+
+        <h2>Meu perfil</h2>
+
+        <div class="aviso-salvo" id="avisoSalvo">✅ Alterações salvas!</div>
+
+        <!-- RESUMO + FOTO -->
+
+        <section class="bloco-form cartao-perfil">
+
+            <div class="avatar-grande" id="avatar">?</div>
+
+            <div class="dados-resumo">
+                <h3 id="resumoNome"></h3>
+                <p id="resumoEmail"></p>
+                <div class="linha-botoes">
+                    <label for="arquivoFoto">📷 Trocar foto</label>
+                    <input type="file" id="arquivoFoto" accept="image/*">
+                    <button type="button" id="removerFoto">Remover foto</button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- DADOS DA CONTA -->
+
+        <form id="formPerfil">
+
+            <section class="bloco-form">
+                <h3>👤 Dados da conta</h3>
+                <div class="grade-form">
+                    <div class="campo">
+                        <label for="nome">Nome completo</label>
+                        <input type="text" id="nome" required>
+                    </div>
+                    <div class="campo">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" disabled>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bloco-form">
+                <h3>❤️ Time do coração</h3>
+                <div class="grade-form">
+                    <div class="campo">
+                        <label for="timeCoracao">Qual é o seu time?</label>
+                        <input type="text" id="timeCoracao" list="listaTimes" placeholder="Time">
+                        <datalist id="listaTimes"></datalist>
+                    </div>
+                </div>
+                <div class="time-coracao-previa" id="previaTime"></div>
+            </section>
+
+            <div class="acoes-form">
+                <button type="submit" class="botao-entrar">Salvar alterações</button>
+                <button type="button" class="botao-secundario" id="btnSair">Sair da conta</button>
+            </div>
+
+        </form>
+
+        <section class="bloco-form" id="blocoAdmin">
+            <h3>🛠️ Administração</h3>
+            <p id="textoAdmin" style="color:#9ca39e;font-size:14px;margin-bottom:14px"></p>
+            <a href="cadastrar-partida.html" class="botao-secundario" id="linkAdmin" style="text-decoration:none;display:inline-block"></a>
+        </section>
+
+        <section class="bloco-form zona-perigo">
+            <h3 style="color:#ff7777">Zona de perigo</h3>
+            <p>Excluir sua conta apaga seus dados deste navegador. Essa ação não pode ser desfeita.</p>
+            <button type="button" id="btnExcluir">Excluir minha conta</button>
+        </section>
+
+        <footer class="rodape">
+            <p>SPORTSTATS — ACOMPANHE O JOGO. ENTENDA OS NÚMEROS.</p>
+        </footer>
+
+    </main>
+
+    <script src="dados.js"></script>
+    <script src="usuario.js"></script>
+    <script>
+
+        const $ = id => document.getElementById(id);
+
+        function desenharPerfil() {
+            const u = usuarioAtual();
+            if (!u) return;
+
+            $('resumoNome').textContent = u.nome;
+            $('resumoEmail').textContent = u.email;
+            $('nome').value = u.nome;
+            $('email').value = u.email;
+            $('timeCoracao').value = u.timeCoracao || '';
+
+            $('avatar').innerHTML = u.foto
+                ? `<img src="${esc(u.foto)}" alt="Minha foto">`
+                : esc(u.nome.trim().charAt(0).toUpperCase());
+
+            mostrarPreviaTime();
+            ativarIconePerfil();
+
+            // cartão da administração
+            if (ehAdmin()) {
+                $('textoAdmin').textContent = 'Esta conta é administradora. Você cadastra e edita as partidas.';
+                $('linkAdmin').textContent = 'Abrir painel de partidas →';
+            } else {
+                $('textoAdmin').textContent = 'Se você administra o SportStats, ative o acesso com a chave de administrador (só na primeira vez).';
+                $('linkAdmin').textContent = 'Ativar acesso de administrador';
+            }
+        }
+
+        function mostrarPreviaTime() {
+            const nome = $('timeCoracao').value.trim();
+            const time = nome ? obterTime(nome) : null;
+            $('previaTime').innerHTML = time
+                ? `${htmlEscudo(time.escudo)} <strong>${esc(time.nome)}</strong>`
+                : '';
+        }
+
+        $('timeCoracao').addEventListener('input', mostrarPreviaTime);
+
+        $('arquivoFoto').addEventListener('change', async (ev) => {
+            const arquivo = ev.target.files[0];
+            if (!arquivo) return;
+            try {
+                const foto = await redimensionarImagem(arquivo, 256, 'image/jpeg');
+                await atualizarUsuario({ foto });
+                desenharPerfil();
+            } catch (erro) {
+                alert(erro.message || 'Não consegui usar essa imagem. Tente um PNG ou JPG.');
+            }
+            ev.target.value = '';
+        });
+
+        $('removerFoto').addEventListener('click', async () => {
+            try {
+                await atualizarUsuario({ foto: '' });
+                desenharPerfil();
+            } catch (erro) {
+                alert(erro.message);
+            }
+        });
+
+        $('formPerfil').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            try {
+                await atualizarUsuario({
+                    nome: $('nome').value.trim(),
+                    timeCoracao: $('timeCoracao').value.trim()
+                });
+                desenharPerfil();
+                $('avisoSalvo').style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (erro) {
+                alert(erro.message);
+            }
+        });
+
+        $('btnSair').addEventListener('click', async () => {
+            await sair();
+            window.location.href = 'index.html';
+        });
+
+        $('btnExcluir').addEventListener('click', async () => {
+            if (!confirm('Tem certeza que deseja excluir sua conta?')) return;
+            try {
+                await excluirContaAtual();
+                window.location.href = 'index.html';
+            } catch (erro) {
+                alert(erro.message);
+            }
+        });
+
+        async function iniciar() {
+            await carregarSessao();
+
+            // Sem login, volta para a tela de entrada
+            if (!usuarioAtual()) {
+                window.location.replace('index.html');
+                return;
+            }
+
+            await carregarTimes();
+            $('listaTimes').innerHTML = nomesDeTimes().map(n => `<option value="${esc(n)}">`).join('');
+            desenharPerfil();
+        }
+
+        iniciar();
+
+    </script>
+
+</body>
+
+</html>

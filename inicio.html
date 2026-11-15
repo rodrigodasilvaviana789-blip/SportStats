@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SportStats | Página Inicial</title>
+
+    <link rel="stylesheet" href="estilo.css">
+</head>
+
+<body class="pagina-inicio">
+
+    <!-- Cabeçalho -->
+
+    <header class="topo">
+
+        <h1 class="logo">Sport<span>Stats</span></h1>
+
+        <nav class="menu-superior">
+            <a href="inicio.html" class="ativo">Início</a>
+            <a href="noticias.html">Notícias</a>
+            <a href="classificacao.html">Classificação</a>
+            <a href="cadastrar-partida.html">Cadastrar partida</a>
+        </nav>
+
+        <div class="perfil">
+            <span>👤</span>
+        </div>
+
+    </header>
+
+
+    <!-- Conteúdo principal -->
+
+    <main class="layout-principal">
+
+
+        <!-- Menu lateral -->
+
+        <aside class="menu-lateral">
+
+            <h3>ESPORTES</h3>
+
+            <a href="#" class="esporte selecionado">⚽ Futebol</a>
+
+            <h3 class="titulo-campeonatos">CAMPEONATOS</h3>
+
+            <a href="classificacao.html">🏆 Brasileirão Série A</a>
+
+        </aside>
+
+
+        <!-- Área dos jogos -->
+
+        <section class="area-jogos">
+
+            <div class="titulo-secao">
+
+                <h2>Jogos e resultados</h2>
+
+            </div>
+
+
+            <div class="abas-jogos">
+
+                <button data-aba="aovivo">● Jogos ao vivo</button>
+
+                <button data-aba="agendada">Próximos jogos</button>
+
+                <button data-aba="encerrada">Finalizados</button>
+
+            </div>
+
+
+            <!-- Jogos (gerados pelo JavaScript a partir do cadastro) -->
+
+            <div id="listaJogos"></div>
+
+        </section>
+
+        <!-- Notícias na lateral direita -->
+
+        <aside class="area-noticias">
+
+            <div class="cabecalho-noticias">
+
+                <h2 id="tituloNoticias">Notícias dos times</h2>
+
+                <a href="noticias.html" id="verTodas">Ver todas →</a>
+
+            </div>
+
+            <!-- Notícias reais (vêm do servidor) -->
+
+            <div id="listaNoticias">
+                <p class="mensagem-vazia">Carregando notícias...</p>
+            </div>
+
+        </aside>
+
+    </main>
+
+
+    <!-- Rodapé -->
+
+    <footer class="rodape-inicio">
+
+        <p>SPORTSTATS — ACOMPANHE O JOGO. ENTENDA OS NÚMEROS.</p>
+
+    </footer>
+
+    <script src="dados.js"></script>
+    <script src="usuario.js"></script>
+    <script src="noticias.js"></script>
+    <script>
+
+        let abaAtual = null;
+
+        function escudoPequeno(valor) {
+            return ehImagem(valor)
+                ? htmlEscudo(valor)
+                : `<span class="escudo-emoji">${htmlEscudo(valor)}</span>`;
+        }
+
+        function htmlPartida(p) {
+            const agendada = p.status === 'agendada';
+            const centro = agendada
+                ? `<strong>${p.hora ? esc(p.hora) : 'x'}</strong>`
+                : `<strong>${p.casa.gols} - ${p.fora.gols}</strong>`;
+
+            let selo;
+            if (p.status === 'aovivo') {
+                selo = `<span class="ao-vivo">${p.minuto ? esc(p.minuto) + "'" : 'AO VIVO'}</span>`;
+            } else if (p.status === 'encerrada') {
+                selo = '<span class="encerrado">FIM</span>';
+            } else {
+                selo = `<span class="hora-jogo">${formatarData(p.data).slice(0, 5)}</span>`;
+            }
+
+            return `
+                <a href="partida.html?id=${encodeURIComponent(p.id)}" class="link-partida">
+                    <div class="partida">
+                        <span class="time-linha">${esc(p.casa.nome)} ${escudoPequeno(p.casa.escudo)}</span>
+                        ${centro}
+                        <span class="time-linha">${escudoPequeno(p.fora.escudo)} ${esc(p.fora.nome)}</span>
+                        ${selo}
+                    </div>
+                </a>`;
+        }
+
+        let listaCarregada = false;
+
+        async function desenharLista() {
+            const alvo = document.getElementById('listaJogos');
+
+            let todas;
+            try {
+                todas = await listarPartidas();
+                listaCarregada = true;
+            } catch (erro) {
+                // se já mostramos a lista antes, mantém o que está na tela
+                if (!listaCarregada) {
+                    alvo.innerHTML = '<div class="grupo-jogos"><p class="mensagem-vazia">Não consegui carregar os jogos agora. Tente novamente em instantes.</p></div>';
+                }
+                return;
+            }
+
+            // primeira vez: abre na primeira aba que tiver jogo
+            if (!abaAtual) {
+                abaAtual = ['aovivo', 'agendada', 'encerrada']
+                    .find(s => todas.some(p => p.status === s)) || 'aovivo';
+            }
+
+            document.querySelectorAll('.abas-jogos button').forEach(b => {
+                b.classList.toggle('aba-selecionada', b.dataset.aba === abaAtual);
+            });
+
+            const filtradas = todas
+                .filter(p => p.status === abaAtual)
+                .sort((a, b) => (a.data + (a.hora || '')).localeCompare(b.data + (b.hora || '')));
+
+            if (filtradas.length === 0) {
+                alvo.innerHTML = '<div class="grupo-jogos"><p class="mensagem-vazia">Nenhum jogo nesta categoria.</p></div>';
+                return;
+            }
+
+            // agrupa por campeonato
+            const grupos = {};
+            filtradas.forEach(p => (grupos[p.campeonato] = grupos[p.campeonato] || []).push(p));
+
+            alvo.innerHTML = Object.entries(grupos).map(([nome, jogos]) => `
+                <div class="grupo-jogos">
+                    <h3>🏆 ${esc(nome)}</h3>
+                    ${jogos.map(htmlPartida).join('')}
+                </div>`).join('');
+        }
+
+        document.querySelector('.abas-jogos').addEventListener('click', (ev) => {
+            const botao = ev.target.closest('button[data-aba]');
+            if (!botao) return;
+            abaAtual = botao.dataset.aba;
+            desenharLista();
+        });
+
+
+        /* ---------- Notícias da lateral ---------- */
+
+        async function carregarNoticiasLateral() {
+            const alvo = document.getElementById('listaNoticias');
+            await carregarSessao();
+            await carregarTimes();
+            const usuario = usuarioAtual();
+            const meuTime = usuario && usuario.timeCoracao;
+
+            try {
+                let dados = null;
+
+                // se a pessoa tem time do coração, mostra as notícias dele primeiro
+                if (meuTime) {
+                    dados = await buscarNoticias({ tag: meuTime, limite: 4 });
+                    if (dados.noticias.length) {
+                        document.getElementById('tituloNoticias').textContent = 'Notícias do ' + meuTime;
+                        document.getElementById('verTodas').href = 'noticias.html#' + encodeURIComponent(meuTime);
+                    }
+                }
+
+                if (!dados || dados.noticias.length === 0) {
+                    dados = await buscarNoticias({ limite: 4 });
+                }
+
+                if (dados.noticias.length === 0) {
+                    alvo.innerHTML = '<p class="mensagem-vazia">O servidor ainda está buscando as primeiras notícias. Volte em instantes.</p>';
+                    return;
+                }
+
+                alvo.innerHTML = dados.noticias.map(htmlNoticiaLateral).join('');
+                tratarImagens(alvo);
+            } catch (erro) {
+                alvo.innerHTML = '<p class="mensagem-vazia">Notícias indisponíveis. Rode <code>node servidor/server.js</code> e acesse <code>http://localhost:3000</code>.</p>';
+            }
+        }
+
+        carregarNoticiasLateral();
+        setInterval(carregarNoticiasLateral, 5 * 60 * 1000);
+
+        desenharLista();
+
+        // Atualiza a lista de jogos a cada 30s (placar ao vivo)
+        setInterval(desenharLista, 30000);
+
+    </script>
+
+</body>
+
+</html>

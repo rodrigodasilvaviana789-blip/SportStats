@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SportStats | Cadastrar partida</title>
+
+    <link rel="stylesheet" href="estilo.css">
+</head>
+
+<body class="pagina-partida">
+
+    <header class="topo">
+
+        <h1 class="logo">Sport<span>Stats</span></h1>
+
+        <nav class="menu-superior">
+            <a href="inicio.html">Início</a>
+            <a href="noticias.html">Notícias</a>
+            <a href="classificacao.html">Classificação</a>
+            <a href="cadastrar-partida.html" class="ativo">Cadastrar partida</a>
+        </nav>
+
+        <div class="perfil">👤</div>
+
+    </header>
+
+    <main class="conteudo-cadastro">
+
+        <h2>Cadastrar partida</h2>
+        <p class="subtitulo">
+            Preencha os dados e salve. A partida aparece sozinha na tela inicial
+            e a página de estatísticas é gerada automaticamente.
+        </p>
+
+        <!-- 1) NÃO ESTÁ LOGADO -->
+
+        <section class="bloco-form" id="portaLogin" style="display:none">
+            <h3>🔒 Área do administrador</h3>
+            <p style="color:#9ca39e;font-size:14px;margin-bottom:16px">
+                Para cadastrar partidas, entre primeiro na sua conta.
+            </p>
+            <div class="acoes-form" style="margin:0">
+                <a href="index.html?voltar=cadastrar-partida.html" class="botao-entrar" style="text-decoration:none;text-align:center">Entrar</a>
+                <a href="cadastro.html?voltar=cadastrar-partida.html" class="botao-secundario" style="text-decoration:none">Criar conta</a>
+            </div>
+        </section>
+
+        <!-- 2) LOGADO, MAS AINDA NÃO É ADMINISTRADOR -->
+
+        <section class="bloco-form" id="portaAdmin" style="display:none">
+            <h3>🔒 Tornar esta conta administradora</h3>
+            <p style="color:#9ca39e;font-size:14px;margin-bottom:16px">
+                Você está logado como <strong id="nomeLogado"></strong>. Digite a <strong>chave de administrador</strong>
+                uma única vez. Depois disso, é só entrar na sua conta normalmente, em qualquer aparelho.
+            </p>
+            <div class="erro-form" id="erroAdmin"></div>
+            <div class="grade-form">
+                <div class="campo">
+                    <label for="senhaAdmin">Chave de administrador</label>
+                    <input type="password" id="senhaAdmin" autocomplete="off">
+                </div>
+            </div>
+            <div class="acoes-form" style="margin:16px 0 0">
+                <button type="button" class="botao-entrar" id="btnEntrarAdmin">Ativar</button>
+            </div>
+        </section>
+
+        <!-- PAINEL (só para o administrador) -->
+
+        <div id="painelAdmin" style="display:none">
+
+        <div class="aviso-salvo" id="avisoSalvo"></div>
+
+        <div class="aviso-salvo" id="avisoImportar"></div>
+
+        <form id="formPartida">
+
+            <input type="hidden" id="id">
+
+            <!-- CAMPEONATO -->
+
+            <section class="bloco-form">
+                <h3>🏆 Campeonato</h3>
+                <div class="grade-form">
+                    <div class="campo">
+                        <label for="campeonato">Campeonato</label>
+                        <input type="text" id="campeonato" value="Campeonato Brasileiro" required>
+                    </div>
+                    <div class="campo">
+                        <label for="rodada">Rodada</label>
+                        <input type="number" id="rodada" min="1" placeholder="">
+                    </div>
+                    <div class="campo">
+                        <label for="temporada">Temporada</label>
+                        <input type="number" id="temporada" min="2000" placeholder="">
+                    </div>
+                </div>
+            </section>
+
+            <!-- DATA E LOCAL -->
+
+            <section class="bloco-form">
+                <h3>📍 Data e local</h3>
+                <div class="grade-form">
+                    <div class="campo">
+                        <label for="data">Data</label>
+                        <input type="date" id="data" required>
+                    </div>
+                    <div class="campo">
+                        <label for="hora">Horário</label>
+                        <input type="time" id="hora">
+                    </div>
+                    <div class="campo">
+                        <label for="estadio">Estádio</label>
+                        <input type="text" id="estadio" placeholder="">
+                    </div>
+                    <div class="campo">
+                        <label for="local">Cidade / Estado</label>
+                        <input type="text" id="local" placeholder="">
+                    </div>
+                </div>
+            </section>
+
+            <!-- TIMES -->
+
+            <div class="times-form">
+
+                <section class="bloco-form">
+                    <h3>🏠 Time mandante</h3>
+                    <div class="grade-form">
+                        <div class="campo">
+                            <label for="casaNome">Nome</label>
+                            <input type="text" id="casaNome" placeholder="Mandante" list="listaTimes" required>
+                        </div>
+                        <div class="campo campo-escudo">
+                            <label>Escudo</label>
+                            <div class="escudo-edit">
+                                <div class="escudo-previa" id="casaPrevia">⚽</div>
+                                <div class="controles">
+                                    <div class="linha-botoes">
+                                        <label for="casaArquivo">📁 Enviar imagem</label>
+                                        <input type="file" id="casaArquivo" accept="image/*">
+                                        <button type="button" id="casaRemover">Remover</button>
+                                    </div>
+                                    <input type="text" id="casaEscudoLink" placeholder="ou cole o link da imagem (https://...) ou um emoji">
+                                    <input type="hidden" id="casaEscudo">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="campo">
+                            <label for="casaCor">Cor nas barras</label>
+                            <input type="color" id="casaCor" value="#d93636">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bloco-form">
+                    <h3>✈️ Time visitante</h3>
+                    <div class="grade-form">
+                        <div class="campo">
+                            <label for="foraNome">Nome</label>
+                            <input type="text" id="foraNome" placeholder="Visitante" list="listaTimes" required>
+                            <datalist id="listaTimes"></datalist>
+                        </div>
+                        <div class="campo campo-escudo">
+                            <label>Escudo</label>
+                            <div class="escudo-edit">
+                                <div class="escudo-previa" id="foraPrevia">⚽</div>
+                                <div class="controles">
+                                    <div class="linha-botoes">
+                                        <label for="foraArquivo">📁 Enviar imagem</label>
+                                        <input type="file" id="foraArquivo" accept="image/*">
+                                        <button type="button" id="foraRemover">Remover</button>
+                                    </div>
+                                    <input type="text" id="foraEscudoLink" placeholder="ou cole o link da imagem (https://...) ou um emoji">
+                                    <input type="hidden" id="foraEscudo">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="campo">
+                            <label for="foraCor">Cor nas barras</label>
+                            <input type="color" id="foraCor" value="#28a85a">
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- PLACAR E STATUS -->
+
+            <section class="bloco-form">
+                <h3>⚽ Placar e situação</h3>
+                <div class="grade-form">
+                    <div class="campo">
+                        <label for="status">Situação</label>
+                        <select id="status">
+                            <option value="agendada">Agendada (ainda não começou)</option>
+                            <option value="aovivo">Ao vivo</option>
+                            <option value="encerrada">Encerrada</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="minuto">Minuto (se ao vivo)</label>
+                        <input type="text" id="minuto" placeholder="">
+                    </div>
+                    <div class="campo">
+                        <label for="casaGols">Gols do mandante</label>
+                        <input type="number" id="casaGols" min="" value="0">
+                    </div>
+                    <div class="campo">
+                        <label for="foraGols">Gols do visitante</label>
+                        <input type="number" id="foraGols" min="" value="0">
+                    </div>
+                </div>
+            </section>
+
+            <!-- ESTATÍSTICAS (gerado pelo JavaScript a partir da lista em dados.js) -->
+
+            <section class="bloco-form">
+                <h3>📊 Estatísticas</h3>
+                <div class="tabela-stats" id="tabelaStats"></div>
+            </section>
+
+            <div class="acoes-form">
+                <button type="submit" class="botao-entrar">Salvar partida</button>
+                <button type="button" class="botao-secundario" id="btnNova">Limpar / nova partida</button>
+            </div>
+
+        </form>
+
+        <!-- PARTIDAS JÁ CADASTRADAS -->
+
+        <section class="bloco-form lista-cadastradas">
+            <h3>📋 Partidas cadastradas</h3>
+            <div id="listaCadastradas"></div>
+        </section>
+
+        </div><!-- /painelAdmin -->
+
+        <footer class="rodape">
+            <p>SPORTSTATS — ACOMPANHE O JOGO. ENTENDA OS NÚMEROS.</p>
+        </footer>
+
+    </main>
+
+    <script src="dados.js"></script>
+    <script src="usuario.js"></script>
+    <script>
+
+        const $ = id => document.getElementById(id);
+
+        /* ---------- Monta a tabela de estatísticas ---------- */
+
+        function montarTabelaStats() {
+            let html = '<span class="cab">Estatística</span>' +
+                       '<span class="cab">Mandante</span>' +
+                       '<span class="cab">Visitante</span>';
+
+            ESTATISTICAS.forEach(e => {
+                html += `
+                    <label for="st_${e.chave}_0">${esc(e.nome)}</label>
+                    <input type="number" min="0" id="st_${e.chave}_0" placeholder="0">
+                    <input type="number" min="0" id="st_${e.chave}_1" placeholder="0">`;
+            });
+
+            $('tabelaStats').innerHTML = html;
+
+            // Posse de bola: ao digitar o mandante, o visitante completa até 100
+            $('st_posse_0').addEventListener('input', () => {
+                const v = parseInt($('st_posse_0').value, 10);
+                if (!isNaN(v) && v >= 0 && v <= 100) $('st_posse_1').value = 100 - v;
+            });
+        }
+
+
+        /* ---------- Escudos (imagem enviada, link ou emoji) ---------- */
+
+        function atualizarPrevia(lado) {
+            $(lado + 'Previa').innerHTML = htmlEscudo($(lado + 'Escudo').value);
+        }
+
+        function definirEscudo(lado, valor) {
+            $(lado + 'Escudo').value = valor || '';
+            // o campo de texto só mostra links/emoji, nunca a imagem enviada (que é enorme)
+            $(lado + 'EscudoLink').value = (valor && !valor.startsWith('data:')) ? valor : '';
+            atualizarPrevia(lado);
+        }
+
+        ['casa', 'fora'].forEach(lado => {
+
+            $(lado + 'Arquivo').addEventListener('change', async (ev) => {
+                const arquivo = ev.target.files[0];
+                if (!arquivo) return;
+                try {
+                    definirEscudo(lado, await redimensionarImagem(arquivo, 128, 'image/png'));
+                } catch (erro) {
+                    alert('Não consegui ler essa imagem. Tente um PNG, JPG ou SVG.');
+                }
+                ev.target.value = '';
+            });
+
+            $(lado + 'EscudoLink').addEventListener('input', () => {
+                $(lado + 'Escudo').value = $(lado + 'EscudoLink').value.trim();
+                atualizarPrevia(lado);
+            });
+
+            $(lado + 'Remover').addEventListener('click', () => definirEscudo(lado, ''));
+
+            // Ao digitar um time que já foi cadastrado, puxa o escudo e a cor dele
+            $(lado + 'Nome').addEventListener('change', () => {
+                const time = obterTime($(lado + 'Nome').value);
+                if (!time) return;
+                if (!$(lado + 'Escudo').value && time.escudo) definirEscudo(lado, time.escudo);
+                if (time.cor) $(lado + 'Cor').value = corSegura(time.cor, $(lado + 'Cor').value);
+            });
+        });
+
+        function carregarSugestoesDeTimes() {
+            $('listaTimes').innerHTML = nomesDeTimes().map(n => `<option value="${esc(n)}">`).join('');
+        }
+
+        /* ---------- Formulário <-> objeto partida ---------- */
+
+        function limparFormulario() {
+            $('formPartida').reset();
+            $('id').value = '';
+            $('campeonato').value = 'Campeonato Brasileiro';
+            $('casaCor').value = '#d93636';
+            $('foraCor').value = '#28a85a';
+            definirEscudo('casa', '');
+            definirEscudo('fora', '');
+        }
+
+        function lerFormulario() {
+            const stats = {};
+            ESTATISTICAS.forEach(e => {
+                stats[e.chave] = [
+                    parseInt($(`st_${e.chave}_0`).value, 10) || 0,
+                    parseInt($(`st_${e.chave}_1`).value, 10) || 0
+                ];
+            });
+
+            return {
+                id: $('id').value || undefined,
+                campeonato: $('campeonato').value.trim(),
+                rodada: $('rodada').value,
+                temporada: $('temporada').value,
+                status: $('status').value,
+                minuto: $('minuto').value.trim(),
+                data: $('data').value,
+                hora: $('hora').value,
+                estadio: $('estadio').value.trim(),
+                local: $('local').value.trim(),
+                casa: {
+                    nome: $('casaNome').value.trim(),
+                    escudo: $('casaEscudo').value.trim(),
+                    cor: $('casaCor').value,
+                    gols: parseInt($('casaGols').value, 10) || 0
+                },
+                fora: {
+                    nome: $('foraNome').value.trim(),
+                    escudo: $('foraEscudo').value.trim(),
+                    cor: $('foraCor').value,
+                    gols: parseInt($('foraGols').value, 10) || 0
+                },
+                stats
+            };
+        }
+
+        function preencherFormulario(p) {
+            $('id').value = p.id || '';
+            $('campeonato').value = p.campeonato || '';
+            $('rodada').value = p.rodada || '';
+            $('temporada').value = p.temporada || '';
+            $('status').value = p.status || 'agendada';
+            $('minuto').value = p.minuto || '';
+            $('data').value = p.data || '';
+            $('hora').value = p.hora || '';
+            $('estadio').value = p.estadio || '';
+            $('local').value = p.local || '';
+
+            $('casaNome').value = p.casa.nome;
+            definirEscudo('casa', p.casa.escudo);
+            $('casaCor').value = corSegura(p.casa.cor, '#d93636');
+            $('casaGols').value = p.casa.gols;
+
+            $('foraNome').value = p.fora.nome;
+            definirEscudo('fora', p.fora.escudo);
+            $('foraCor').value = corSegura(p.fora.cor, '#28a85a');
+            $('foraGols').value = p.fora.gols;
+
+            ESTATISTICAS.forEach(e => {
+                const par = (p.stats && p.stats[e.chave]) || [0, 0];
+                $(`st_${e.chave}_0`).value = par[0];
+                $(`st_${e.chave}_1`).value = par[1];
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* ---------- Lista de partidas cadastradas ---------- */
+
+        async function mostrarLista() {
+            let lista;
+            try {
+                lista = await listarPartidas();
+            } catch (erro) {
+                $('listaCadastradas').innerHTML = `<p class="mensagem-vazia">${esc(erro.message)}</p>`;
+                return;
+            }
+
+            if (lista.length === 0) {
+                $('listaCadastradas').innerHTML =
+                    '<p class="mensagem-vazia">Nenhuma partida cadastrada ainda.</p>';
+                return;
+            }
+
+            $('listaCadastradas').innerHTML = lista.map(p => `
+                <div class="item">
+                    <div>
+                        <strong>${esc(p.casa.nome)} ${p.casa.gols} x ${p.fora.gols} ${esc(p.fora.nome)}</strong>
+                        <small>${esc(p.campeonato)} • ${formatarData(p.data)} ${esc(p.hora)} • ${STATUS[p.status] || ''}</small>
+                    </div>
+                    <div class="botoes">
+                        <a href="partida.html?id=${encodeURIComponent(p.id)}">Abrir</a>
+                        <button type="button" data-acao="editar" data-id="${esc(p.id)}">Editar</button>
+                        <button type="button" class="excluir" data-acao="excluir" data-id="${esc(p.id)}">Excluir</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        $('listaCadastradas').addEventListener('click', async (ev) => {
+            const botao = ev.target.closest('button[data-acao]');
+            if (!botao) return;
+
+            const id = botao.dataset.id;
+
+            try {
+                if (botao.dataset.acao === 'editar') {
+                    const p = await obterPartida(id);
+                    if (p) preencherFormulario(p);
+                }
+
+                if (botao.dataset.acao === 'excluir' && confirm('Excluir esta partida?')) {
+                    await excluirPartida(id);
+                    if ($('id').value === id) limparFormulario();
+                    mostrarLista();
+                }
+            } catch (erro) {
+                alert(erro.message);
+            }
+        });
+
+        /* ---------- Salvar ---------- */
+
+        $('formPartida').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+
+            let partida;
+            try {
+                partida = await salvarPartida(lerFormulario());
+            } catch (erro) {
+                if (erro.status === 401) { location.reload(); return; } // sessão venceu
+                alert(erro.message);
+                return;
+            }
+
+            $('id').value = partida.id;
+            // o servidor guardou as imagens e devolveu o endereço delas
+            definirEscudo('casa', partida.casa.escudo);
+            definirEscudo('fora', partida.fora.escudo);
+            await carregarTimes();
+            carregarSugestoesDeTimes();
+
+            const aviso = $('avisoSalvo');
+            aviso.innerHTML = `✅ Partida salva! <a href="partida.html?id=${encodeURIComponent(partida.id)}" style="color:#00e676">Ver a página da partida →</a>`;
+            aviso.style.display = 'block';
+
+            mostrarLista();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        $('btnNova').addEventListener('click', () => {
+            limparFormulario();
+            $('avisoSalvo').style.display = 'none';
+        });
+
+        /* ---------- Início ---------- */
+
+        /* ---------- Importar partidas antigas deste navegador ---------- */
+
+        // Antes, as partidas ficavam só no navegador. Se ainda houver algumas, oferece enviar ao servidor.
+        function partidasAntigas() {
+            try {
+                if (localStorage.getItem('sportstats_importado')) return [];
+                const lista = JSON.parse(localStorage.getItem('sportstats_partidas') || '[]');
+                return Array.isArray(lista) ? lista : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function oferecerImportacao() {
+            const antigas = partidasAntigas();
+            if (antigas.length === 0) return;
+
+            const aviso = $('avisoImportar');
+            aviso.innerHTML = `📦 Encontrei ${antigas.length} partida(s) salva(s) só neste navegador.
+                <button type="button" class="botao-secundario" id="btnImportar" style="margin-left:10px;padding:8px 14px">Enviar para o servidor</button>
+                <button type="button" class="botao-secundario" id="btnDescartar" style="padding:8px 14px">Ignorar</button>`;
+            aviso.style.display = 'block';
+
+            $('btnDescartar').addEventListener('click', () => {
+                localStorage.setItem('sportstats_importado', '1');
+                aviso.style.display = 'none';
+            });
+
+            $('btnImportar').addEventListener('click', async () => {
+                let ok = 0, falhas = 0;
+                for (const p of antigas) {
+                    try { await salvarPartida(p); ok++; } catch (e) { falhas++; }
+                }
+                if (falhas === 0) localStorage.setItem('sportstats_importado', '1');
+                aviso.innerHTML = `✅ ${ok} partida(s) enviada(s)${falhas ? `, ${falhas} não puderam ser enviadas` : ''}.`;
+                await carregarTimes();
+                carregarSugestoesDeTimes();
+                mostrarLista();
+            });
+        }
+
+        /* ---------- Entrada do administrador ---------- */
+
+        async function entrarComoAdmin() {
+            const erro = $('erroAdmin');
+            erro.style.display = 'none';
+            try {
+                await entrarAdmin($('senhaAdmin').value);
+                location.reload();
+            } catch (e) {
+                erro.textContent = e.message;
+                erro.style.display = 'block';
+            }
+        }
+
+        $('btnEntrarAdmin').addEventListener('click', entrarComoAdmin);
+        $('senhaAdmin').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') entrarComoAdmin(); });
+
+        /* ---------- Início ---------- */
+
+        async function iniciar() {
+            await carregarSessao();
+
+            if (!usuarioAtual()) {
+                $('portaLogin').style.display = 'block';
+                return;
+            }
+
+            if (!ehAdmin()) {
+                $('nomeLogado').textContent = usuarioAtual().nome;
+                $('portaAdmin').style.display = 'block';
+                return;
+            }
+
+            $('painelAdmin').style.display = 'block';
+            await carregarTimes();
+            montarTabelaStats();
+            carregarSugestoesDeTimes();
+            mostrarLista();
+            oferecerImportacao();
+        }
+
+        iniciar();
+
+    </script>
+
+</body>
+
+</html>
