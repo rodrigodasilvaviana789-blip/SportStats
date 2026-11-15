@@ -30,9 +30,8 @@ const PASTA = process.env.DATA_DIR
 /* ---------- Configuração do Supabase ---------- */
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
-console.log('[DEBUG] SUPABASE_URL:', SUPABASE_URL);
-
 const SUPABASE_CHAVE = (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+const MODO = SUPABASE_URL && SUPABASE_CHAVE ? 'supabase' : 'arquivos';
 
 if (MODO === 'supabase') {
     // A chave nunca pode trafegar sem criptografia (exceto para teste em localhost)
