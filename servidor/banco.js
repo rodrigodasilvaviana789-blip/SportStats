@@ -97,7 +97,7 @@ function explicarErro(status, d) {
         return 'O Supabase recusou a chave. Confira SUPABASE_SECRET_KEY (use a chave SECRET / service_role, não a publishable/anon).';
     }
     if (status === 404 || /PGRST205|relation .* does not exist|schema cache/i.test(texto)) {
-        return 'Tabela não encontrada no Supabase. Rode o arquivo supabase.sql no SQL Editor do projeto.';
+        return `Erro original do Supabase (${status}): ${d.message || ''} | Código: ${d.code || ''} | Detalhes: ${d.details || ''}`;
     }
     return `Erro do Supabase (${status}): ${d.message || 'sem detalhes'}`;
 }
