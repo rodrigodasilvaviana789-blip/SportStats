@@ -1624,3 +1624,16 @@ input[type="time"]::-webkit-calendar-picker-indicator {
         display: none;
     }
 }
+
+/* Separação por rodada na tela inicial */
+.titulo-rodada {
+    padding: 10px 15px;
+    background-color: #151a16;
+    color: #00e676;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-top: 1px solid #303830;
+    border-bottom: 1px solid #303830;
+}
