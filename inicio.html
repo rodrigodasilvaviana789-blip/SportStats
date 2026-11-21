@@ -186,14 +186,38 @@
                 return;
             }
 
-            // agrupa por campeonato
-            const grupos = {};
-            filtradas.forEach(p => (grupos[p.campeonato] = grupos[p.campeonato] || []).push(p));
+                       // agrupa por campeonato e, dentro de cada um, por rodada
+            const campeonatos = {};
+            filtradas.forEach(p => {
+                // "3" e "Rodada 3" viram a mesma rodada
+                const texto = String(p.rodada || '').trim();
+                const numero = texto.match(/^(?:rodada\s*)?(\d+)$/i);
+                const rodada = numero ? String(Number(numero[1])) : texto;
 
-            alvo.innerHTML = Object.entries(grupos).map(([nome, jogos]) => `
+                campeonatos[p.campeonato] = campeonatos[p.campeonato] || {};
+                (campeonatos[p.campeonato][rodada] = campeonatos[p.campeonato][rodada] || []).push(p);
+            });
+
+            // 1, 2, 3... em ordem numérica; depois nomes (ex.: "Final"); sem rodada por último
+            const ehNumero = r => /^\d+$/.test(r);
+            const ordemRodada = (a, b) => {
+                if (a === '') return 1;
+                if (b === '') return -1;
+                if (ehNumero(a) && ehNumero(b)) return Number(a) - Number(b);
+                if (ehNumero(a)) return -1;
+                if (ehNumero(b)) return 1;
+                return a.localeCompare(b, 'pt-BR');
+            };
+
+            const tituloRodada = r => !r ? 'Sem rodada definida' : (ehNumero(r) ? 'Rodada ' + r : r);
+
+            alvo.innerHTML = Object.entries(campeonatos).map(([nome, rodadas]) => `
                 <div class="grupo-jogos">
                     <h3>🏆 ${esc(nome)}</h3>
-                    ${jogos.map(htmlPartida).join('')}
+                    ${Object.keys(rodadas).sort(ordemRodada).map(r => `
+                        <div class="titulo-rodada">${esc(tituloRodada(r))}</div>
+                        ${rodadas[r].map(htmlPartida).join('')}
+                    `).join('')}
                 </div>`).join('');
         }
 
